@@ -28,16 +28,17 @@ pipeline {
                                 "metadata": [
                                     "name": "pi",
                                     "labels": [
-                                        'foo':'bar'
+                                        "foo":"bar"
                                     ]
                                 ],
                                 "spec": [
                                     "template": [
                                         "spec": [
-                                            "containers": [
+                                            "containers": [[
                                                 "name": "pi",
                                                 "image": "image-registry.openshift-image-registry.svc:5000/openshift/perl",
                                                 "command": ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+                                                ]
                                             ],
                                             "restartPolicy": "Never"
                                         ]
@@ -55,4 +56,4 @@ pipeline {
             } // steps
         } // stage
     } // stages
-} // pipeline   
+} // pipeline  
