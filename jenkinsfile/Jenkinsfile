@@ -5,22 +5,16 @@ pipeline {
         timeout(time: 20, unit: 'MINUTES')
     } //options
     environment {
-        JFROG_URL_BASE   = "aio.home.io:5000"
-        JFROG_REPO       = "ntlsrepo"
-        DEV_NS           = "ntls-dev"
+        DEV_NS           = "acme-dev"
         APP_NAME         = "py-helloworld"
-        APP_BLDR_IMG     = "${JFROG_URL_BASE}/${JFROG_REPO}/ubi7-python-36:1-63.1584463519"
-        GIT_URL          = "ssh://git@github.com/jfblaine"
-        APP_GIT_REPO     = "${GIT_URL}/py-helloworld.git"
-        JFROG_OCP_SECRET = "artifactory-pull-secret"
+        APP_BLDR_IMG     = "registry.access.redhat.com/ubi8/python-36"
+        GIT_URL          = "https://github.com/jfblaine/acme-demo.git"
         GIT_BRANCH       = "master"
         HELM_CHART_DIR   = "helm-deploy"
-        HELM_REPO        = "${GIT_URL}/${HELM_CHART_DIR}.git"
-        TILLER_NAMESPACE = "ntls-tiller"
     }
     parameters {
         choice(name: 'TARGET_NS', choices: ['acme-qa', 'acme-uat'], description: 'Choose target environment')
-        choice(name: 'DB_TYPE', choices: ['mysql', 'oracle'], description: 'Choose database to be used')
+        choice(name: 'DB_TYPE', choices: ['mysql', 'postgresql'], description: 'Choose database to be used')
     }
     stages {
          stage('Build') {
@@ -57,15 +51,14 @@ pipeline {
                                  echo "No existing BuildConfig found. Creating new BuildConfig."
                                  def myNewApp = openshift.newApp (
                                      "--name=${APP_NAME}",
-                                     "${APP_BLDR_IMG}~${APP_GIT_REPO}#${GIT_BRANCH}",
+                                     "${APP_BLDR_IMG}~${GIT_URL}#${GIT_BRANCH}",
                                      "--strategy=docker",
                                      "--insecure-registry",
-                                     "--context-dir=jenkinsfile"
+                                     "--context-dir=${APP_NAME}"
                                      "-e BUILD_NUMBER=${BUILD_NUMBER}",
                                      "-e BUILD_ENV=${openshift.project()}",
                                      "-e NAMESPACE=${DEV_NS}"
                                      )
-                                 openshift.set("build-secret --pull bc/${APP_NAME} ${JFROG_OCP_SECRET}")
                                  echo "new-app myNewApp ${myNewApp.count()} objects named: ${myNewApp.names()}"
                                  myNewApp.describe()
                                  // selects the build config
@@ -91,25 +84,5 @@ pipeline {
                  } // script
              } // steps
          } //stage-build
-         stage('Deploy image with helm') {
-            agent {
-                label 'helm'
-            }
-            steps {
-                  script {
-                       git credentialsId: 'helm-deploy-repo-at-github',
-                           url: "${HELM_REPO}"
-                       withCredentials([file(credentialsId: 'tiller-kubeconfig', variable: 'kubeconfig')]) {
-                            sh """
-                                export KUBECONFIG=\${kubeconfig}; export TILLER_NAMESPACE="${TILLER_NAMESPACE}"
-                                helm upgrade --install --debug "${APP_NAME}-${TARGET_NS}" . \
-                                    --tiller-namespace "${TILLER_NAMESPACE}" --namespace "${TARGET_NS}" \
-                                    --set image_url="${JFROG_URL_BASE}/${JFROG_REPO}/${APP_NAME}:v${BUILD_NUMBER}" \
-                                    --set name="${APP_NAME}" --set namespace="${TARGET_NS}" --set db_type="${DB_TYPE}"
-                               """
-                       }
-                  } // script
-            } // steps
-        } // stage
     } // stages
 } // pipeline
