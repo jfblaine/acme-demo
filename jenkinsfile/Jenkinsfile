@@ -11,6 +11,7 @@ pipeline {
         GIT_URL          = "https://github.com/jfblaine/acme-demo.git"
         GIT_BRANCH       = "master"
         HELM_CHART_DIR   = "helm-deploy"
+        OCP_REG_URL      = "image-registry.openshift-image-registry.svc:5000"
     }
     parameters {
         choice(name: 'TARGET_NS', choices: ['acme-qa', 'acme-uat'], description: 'Choose target environment')
@@ -74,6 +75,9 @@ pipeline {
 
                              echo "Tag Container image with 'build number' as version"
                              openshift.tag("${APP_NAME}:latest", "${APP_NAME}:v${BUILD_NUMBER}")
+                             
+                             echo "Promote image to target namespace via tag"
+                             openshift.tag("${APP_NAME}:v${BUILD_NUMBER}", "${TARGET_NS}/${APP_NAME}:v${BUILD_NUMBER}")
 
                              echo "Determining if Route for Service exists, if not create Route"
                              if (!openshift.selector("route",APP_NAME).exists()) {
@@ -84,5 +88,24 @@ pipeline {
                  } // script
              } // steps
          } //stage-build
+         stage('Deploy image with helm') {
+            agent {
+                label 'helm3'
+            }
+            steps {
+                  script {
+                       git url: "${GIT_URL}"
+                       withCredentials([file(credentialsId: 'helm3-deployer-kubeconfig', variable: 'kubeconfig')]) {
+                            sh """
+                                export KUBECONFIG="${kubeconfig}"
+                                helm upgrade --install --debug "${APP_NAME}-${TARGET_NS}" ./"${HELM_CHART_DIR}" \
+                                    --namespace "${TARGET_NS}" \
+                                    --set image_url="${OCP_REG_URL}/${TARGET_NS}/${APP_NAME}:v${BUILD_NUMBER}" \
+                                    --set name="${APP_NAME}" --set namespace="${TARGET_NS}" --set db_type="${DB_TYPE}"
+                               """
+                       }
+                  } // script
+            } // steps
+        } // stage
     } // stages
 } // pipeline
