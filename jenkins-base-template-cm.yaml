@@ -50,7 +50,7 @@ data:
       <containers>
         <org.csanchez.jenkins.plugins.kubernetes.ContainerTemplate>
           <name>jnlp</name>
-          <image>image-registry.openshift-image-registry.svc:5000/nbcu-demo/ose-jenkins-helm3-agent-base@sha256:733f32f5066935e804153fc125857ff0bacfda99087a34fd68f737879a504d4f</image>
+          <image>image-registry.openshift-image-registry.svc:5000/openshift/ose-jenkins-helm3-agent-base@sha256:733f32f5066935e804153fc125857ff0bacfda99087a34fd68f737879a504d4f</image>
           <privileged>false</privileged>
           <alwaysPullImage>true</alwaysPullImage>
           <workingDir>/tmp</workingDir>

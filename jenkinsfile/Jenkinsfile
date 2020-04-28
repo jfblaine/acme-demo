@@ -1,111 +1,26 @@
 pipeline {
-  agent none
+    agent none
     options {
         // set a timeout of 20 minutes for this pipeline
         timeout(time: 20, unit: 'MINUTES')
     } //options
-    environment {
-        DEV_NS           = "acme-dev"
-        APP_NAME         = "py-helloworld"
-        APP_BLDR_IMG     = "registry.access.redhat.com/ubi8/python-36"
-        GIT_URL          = "https://github.com/jfblaine/acme-demo.git"
-        GIT_BRANCH       = "master"
-        HELM_CHART_DIR   = "helm-deploy"
-        OCP_REG_URL      = "image-registry.openshift-image-registry.svc:5000"
-    }
-    parameters {
-        choice(name: 'TARGET_NS', choices: ['acme-qa', 'acme-uat'], description: 'Choose target environment')
-        choice(name: 'DB_TYPE', choices: ['mysql', 'postgresql'], description: 'Choose database to be used')
-    }
     stages {
-         stage('Build') {
-            agent {
-                label 'base'
-            }
+        stage('execute pi job')
+        agent {
+            label 'base'
+        } {
             steps {
-                 script {
-                     openshift.withCluster() {
-                         openshift.withProject() {
-                             echo "Using project: ${openshift.project()}"
-                         }
-                     }
-                 }
-                 echo "Sample Build stage using project ${DEV_NS}"
-                 echo "Sample Build running on node: ${NODE_NAME}"
-                 script {
-                     openshift.withCluster() {
-                         openshift.withProject("${DEV_NS}")
-                         {
-
-                             if (openshift.selector("bc",APP_NAME).exists()) {
-                                 echo "Using existing BuildConfig. Running new Build."
-                                 def bc = openshift.startBuild(APP_NAME)
-                                 openshift.set("env dc/${APP_NAME} BUILD_NUMBER=${BUILD_NUMBER}")
-                                 // output build logs to the Jenkins console
-                                 echo "Logs from build"
-                                 def result = bc.logs('-f')
-                                 // actions that took place
-                                 echo "The logs operation require ${result.actions.size()} 'oc' interactions"
-                                 // see exactly what oc command was executed.
-                                 echo "Logs executed: ${result.actions[0].cmd}"
-                             } else {
-                                 echo "No existing BuildConfig found. Creating new BuildConfig."
-                                 def myNewApp = openshift.newApp (
-                                     "--name=${APP_NAME}",
-                                     "${APP_BLDR_IMG}~${GIT_URL}#${GIT_BRANCH}",
-                                     "--strategy=docker",
-                                     "--insecure-registry",
-                                     "--context-dir=${APP_NAME}",
-                                     "-e BUILD_NUMBER=${BUILD_NUMBER}",
-                                     "-e BUILD_ENV=${openshift.project()}",
-                                     "-e NAMESPACE=${DEV_NS}"
-                                     )
-                                 echo "new-app myNewApp ${myNewApp.count()} objects named: ${myNewApp.names()}"
-                                 myNewApp.describe()
-                                 // selects the build config
-                                 def bc = myNewApp.narrow('bc')
-                                 // output build logs to the Jenkins conosole
-                                 echo "Logs from build"
-                                 def result = bc.logs('-f')
-                                 // actions that took place
-                                 echo "The logs operation require ${result.actions.size()} 'oc' interactions"
-                                 // see exactly what oc command was executed.
-                                 echo "Logs executed: ${result.actions[0].cmd}"
-                             } //else
-
-                             echo "Tag Container image with 'build number' as version"
-                             openshift.tag("${APP_NAME}:latest", "${APP_NAME}:v${BUILD_NUMBER}")
-                             
-                             echo "Promote image to target namespace via tag"
-                             openshift.tag("${APP_NAME}:v${BUILD_NUMBER}", "${TARGET_NS}/${APP_NAME}:v${BUILD_NUMBER}")
-
-                             echo "Determining if Route for Service exists, if not create Route"
-                             if (!openshift.selector("route",APP_NAME).exists()) {
-                                 openshift.selector("svc",APP_NAME).expose()
-                             }
-                         } // project
-                     } // cluster
-                 } // script
-             } // steps
-         } //stage-build
-         stage('Deploy image with helm') {
-            agent {
-                label 'helm3'
+                script {
+                    openshift.withCluster() {
+                        openshift.withProject() {
+                            if (openshift.selector("jobs", "pi").exists()) {
+                                openshift.selector("jobs", templateName).delete()
+                            }
+                            openshift.create('job', 'pi', '--image="image-registry.openshift-image-registry.svc:5000/openshift/perl" -- "perl" "-Mbignum=bpi" "-wle" "print bpi(2000)"')
+                        }
+                    }
+                }
             }
-            steps {
-                  script {
-                       git url: "${GIT_URL}"
-                       withCredentials([file(credentialsId: 'helm3-deployer-kubeconfig', variable: 'kubeconfig')]) {
-                            sh """
-                                export KUBECONFIG="${kubeconfig}"
-                                helm upgrade --install --debug "${APP_NAME}-${TARGET_NS}" ./"${HELM_CHART_DIR}" \
-                                    --namespace "${TARGET_NS}" \
-                                    --set image_url="${OCP_REG_URL}/${TARGET_NS}/${APP_NAME}:v${BUILD_NUMBER}" \
-                                    --set name="${APP_NAME}" --set namespace="${TARGET_NS}" --set db_type="${DB_TYPE}"
-                               """
-                       }
-                  } // script
-            } // steps
-        } // stage
+        }
     } // stages
 } // pipeline
