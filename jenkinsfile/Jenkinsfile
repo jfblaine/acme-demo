@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any
     options {
         // set a timeout of 20 minutes for this pipeline
         timeout(time: 20, unit: 'MINUTES')
@@ -15,19 +15,15 @@ pipeline {
     }
     stages {
         stage('Create and execute pi job') {
-            agent {
-                label 'base'
-            }
             steps {
                 script {
                     openshift.withCluster() {
                         openshift.withProject() {
-                            if (openshift.selector("jobs", "pi").exists()) {
-                                openshift.selector("jobs", "pi").delete()
+                            if (openshift.selector('jobs', 'pi').exists()) {
+                                openshift.selector('jobs', 'pi').delete()
                             }
-                            openshift.create("job", "pi", "--image=image-registry.openshift-image-registry.svc:5000/openshift/perl", "--", "perl", "-Mbignum=bpi", "-wle", "print bpi(2000)")
-                            def podSelector = openshift.selector("po", [ job-name : pi ])
-                            podSelector.logs("-f")
+                            openshift.create('job', 'pi', '--image=image-registry.openshift-image-registry.svc:5000/openshift/perl', '--', 'perl', '-Mbignum=bpi', '-wle', 'print bpi(2000)')
+                            openshift.selector('jobs', 'pi').logs('-f')
                         }
                     }
                 }
