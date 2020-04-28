@@ -47,9 +47,9 @@ pipeline {
                                 ]
                             ]
                             echo "this is the value of the job variable: ${job}"
-                            // def objs = openshift.create( job, '--save-config', '--validate' )
-                            // objs.describe()
-                            // objs.logs(-f)
+                            def objs = openshift.create( job, '--save-config', '--validate' )
+                            objs.describe()
+                            objs.logs(-f)
                         }
                     }
                 }
