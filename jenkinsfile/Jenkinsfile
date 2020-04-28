@@ -23,7 +23,7 @@ pipeline {
             openshift.withCluster() {
                 openshift.withProject() {
                   if (openshift.selector("jobs", "pi").exists()) { 
-                    openshift.selector("jobs", templateName).delete()
+                    openshift.selector("jobs", "pi").delete()
                   }
                 openshift.create("job", "pi", "--image=image-registry.openshift-image-registry.svc:5000/openshift/perl", "--", "perl", "-Mbignum=bpi", "-wle", "print bpi(2000)")
                 }
