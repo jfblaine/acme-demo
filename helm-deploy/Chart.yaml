@@ -1,0 +1,9 @@
+description: An example python3 application with no database.
+home: https://access.redhat.com
+keywords:
+- quickstart
+- py-helloworld
+name: py-helloworld
+sources:
+- https://github.com/jfblaine/py-helloworld.git
+version: "0.1"
