@@ -22,8 +22,31 @@ pipeline {
                             if (openshift.selector('jobs', 'pi').exists()) {
                                 openshift.selector('jobs', 'pi').delete()
                             }
-                            openshift.create('job', 'pi', '--image=image-registry.openshift-image-registry.svc:5000/openshift/perl', '--', 'perl', '-Mbignum=bpi', '-wle', 'print bpi(2000)')
-                            openshift.selector('jobs', 'pi').logs('-f')
+                            def job = [
+                                "apiVersion": "batch/v1",
+                                "kind": "Job",
+                                "metadata": [
+                                    "name": "pi",
+                                    "labels": [
+                                        'foo':'bar'
+                                    ]
+                                ],
+                                "spec": [
+                                    "template": [
+                                        "spec": [
+                                            "containers": [
+                                                "name": "pi",
+                                                "image": "image-registry.openshift-image-registry.svc:5000/openshift/perl",
+                                                "command": ["perl",  "-Mbignum=bpi", "-wle", "print bpi(2000)"]                            
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                            echo ${job}
+                            def objs = openshift.create( job, '--save-config', '--validate' )
+                            objs.describe()
+                            objs.logs(-f)
                         }
                     }
                 }
