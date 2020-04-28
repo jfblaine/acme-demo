@@ -43,7 +43,7 @@ pipeline {
                                     ]
                                 ]
                             ]
-                            echo ${job}
+                            echo job
                             def objs = openshift.create( job, '--save-config', '--validate' )
                             objs.describe()
                             objs.logs(-f)
