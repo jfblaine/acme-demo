@@ -1,34 +1,36 @@
 pipeline {
-  agent none
+    agent none
     options {
         // set a timeout of 20 minutes for this pipeline
         timeout(time: 20, unit: 'MINUTES')
     } //options
     environment {
-        DEV_NS           = "acme-dev"
-        APP_NAME         = "py-helloworld"
-        APP_BLDR_IMG     = "registry.access.redhat.com/ubi8/python-36"
-        GIT_URL          = "https://github.com/jfblaine/acme-demo.git"
-        GIT_BRANCH       = "master"
-        HELM_CHART_DIR   = "helm-deploy"
-        OCP_REG_URL      = "image-registry.openshift-image-registry.svc:5000"
+        DEV_NS = "acme-dev"
+        APP_NAME = "py-helloworld"
+        APP_BLDR_IMG = "registry.access.redhat.com/ubi8/python-36"
+        GIT_URL = "https://github.com/jfblaine/acme-demo.git"
+        GIT_BRANCH = "master"
+        HELM_CHART_DIR = "helm-deploy"
+        OCP_REG_URL = "image-registry.openshift-image-registry.svc:5000"
     }
     stages {
-         stage('Create and execute pi job') {
+        stage('Create and execute pi job') {
             agent {
                 label 'base'
             }
             steps {
-        script {
-            openshift.withCluster() {
-                openshift.withProject() {
-                  if (openshift.selector("jobs", "pi").exists()) { 
-                    openshift.selector("jobs", "pi").delete()
-                  }
-                openshift.create("job", "pi", "--image=image-registry.openshift-image-registry.svc:5000/openshift/perl", "--", "perl", "-Mbignum=bpi", "-wle", "print bpi(2000)")
+                script {
+                    openshift.withCluster() {
+                        openshift.withProject() {
+                            if (openshift.selector("jobs", "pi").exists()) {
+                                openshift.selector("jobs", "pi").delete()
+                            }
+                            openshift.create("job", "pi", "--image=image-registry.openshift-image-registry.svc:5000/openshift/perl", "--", "perl", "-Mbignum=bpi", "-wle", "print bpi(2000)")
+                            def podSelector = openshift.selector("po", "-l job-name=pi")
+                            podSelector.logs("-f")
+                        }
+                    }
                 }
-            }
-        }
             } // steps
         } // stage
     } // stages
