@@ -26,7 +26,7 @@ pipeline {
                                 openshift.selector("jobs", "pi").delete()
                             }
                             openshift.create("job", "pi", "--image=image-registry.openshift-image-registry.svc:5000/openshift/perl", "--", "perl", "-Mbignum=bpi", "-wle", "print bpi(2000)")
-                            def podSelector = openshift.selector("po", "job-name : pi")
+                            def podSelector = openshift.selector("po", [ job-name : pi ])
                             podSelector.logs("-f")
                         }
                     }
