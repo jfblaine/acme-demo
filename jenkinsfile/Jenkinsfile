@@ -54,7 +54,7 @@ pipeline {
                                      "${APP_BLDR_IMG}~${GIT_URL}#${GIT_BRANCH}",
                                      "--strategy=docker",
                                      "--insecure-registry",
-                                     "--context-dir=${APP_NAME}"
+                                     "--context-dir=${APP_NAME}",
                                      "-e BUILD_NUMBER=${BUILD_NUMBER}",
                                      "-e BUILD_ENV=${openshift.project()}",
                                      "-e NAMESPACE=${DEV_NS}"
