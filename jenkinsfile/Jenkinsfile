@@ -50,7 +50,7 @@ pipeline {
                             objs.describe()
                             def podselector = openshift.selector( 'po', [ 'job-name': 'pi' ] )
                             podselector.watch {
-                                podselector.status.phase == 'Running'
+                                return podselector.status.phase == 'Running'
                             }
                             podselector.logs('-f')
                         }
