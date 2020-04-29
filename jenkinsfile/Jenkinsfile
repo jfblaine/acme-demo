@@ -43,7 +43,7 @@ pipeline {
                                             "restartPolicy": "Never"
                                         ]
                                     ],
-                                    "backoffLimit": "4"
+                                    "backoffLimit": 4
                                 ]
                             ]
                             echo "this is the value of the job variable: ${job}"
