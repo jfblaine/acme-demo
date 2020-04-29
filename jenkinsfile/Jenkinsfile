@@ -48,7 +48,11 @@ pipeline {
                             ]
                             def objs = openshift.create( job, '--save-config', '--validate' )
                             objs.describe()
-                            openshift.selector( 'po', [ 'job-name': 'pi' ] ).logs('-f')
+                            def podselector = openshift.selector( 'po', [ job-name: 'pi' ] )
+                            podselector.watch {
+                                podselector.status.phase == 'Running'
+                            }
+                            podselector.logs('-f')
                         }
                     }
                 }
