@@ -40,3 +40,31 @@ subjects:
 - kind: ServiceAccount
   name: helm3-deployer
   namespace: acme-dev
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: acme-dev-jenkins-edit
+  namespace: acme-qa
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: jenkins
+  namespace: acme-dev
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: acme-dev-jenkins-edit
+  namespace: acme-uat
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: jenkins
+  namespace: acme-dev
