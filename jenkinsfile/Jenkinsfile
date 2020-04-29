@@ -146,6 +146,7 @@ pipeline {
                        withCredentials([file(credentialsId: 'helm3-deployer-kubeconfig', variable: 'kubeconfig')]) {
                             sh """
                                 export KUBECONFIG="${kubeconfig}"
+                                helm version
                                 helm upgrade --install --debug "${APP_NAME}-${TARGET_NS}" ./"${HELM_CHART_DIR}" \
                                     --namespace "${TARGET_NS}" \
                                     --set image_url="${OCP_REG_URL}/${TARGET_NS}/${APP_NAME}:v${BUILD_NUMBER}" \
