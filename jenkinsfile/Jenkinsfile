@@ -46,14 +46,13 @@ pipeline {
                                     "backoffLimit": 4
                                 ]
                             ]
-                            echo "this is the value of the job variable: ${job}"
                             def objs = openshift.create( job, '--save-config', '--validate' )
                             objs.describe()
-                            objs.logs(-f)
+                            objs.logs('-f')
                         }
                     }
                 }
             } // steps
         } // stage
     } // stages
-} // pipeline  
+} // pipeline
