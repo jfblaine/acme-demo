@@ -48,7 +48,7 @@ pipeline {
                             ]
                             def objs = openshift.create( job, '--save-config', '--validate' )
                             objs.describe()
-                            openshift.selector( 'po', [ job-name: 'pi' ] ).logs('-f')
+                            openshift.selector( 'po', [ 'job-name': 'pi' ] ).logs('-f')
                         }
                     }
                 }
