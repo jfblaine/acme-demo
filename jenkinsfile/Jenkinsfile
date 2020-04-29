@@ -25,7 +25,7 @@ pipeline {
             steps {
                  script {
                      openshift.withCluster() {
-                         openshift.withProject() {
+                         openshift.withProject("${DEV_NS}") {
                              echo "Using project: ${openshift.project()}"
                          }
                      }
@@ -93,7 +93,7 @@ pipeline {
              steps {
                  script {
                      openshift.withCluster() {
-                         openshift.withProject() {
+                         openshift.withProject("${DEV_NS}") {
                              if (openshift.selector('jobs', 'pi').exists()) {
                                  openshift.selector('jobs', 'pi').delete()
                              }
