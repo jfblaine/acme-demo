@@ -36,7 +36,6 @@ pipeline {
                      openshift.withCluster() {
                          openshift.withProject("${DEV_NS}")
                          {
-
                              if (openshift.selector("bc",APP_NAME).exists()) {
                                  echo "Using existing BuildConfig. Running new Build."
                                  def bc = openshift.startBuild(APP_NAME)
